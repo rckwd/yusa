@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Belanja Yusa</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6d28d9">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Yusa">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#17202a;background:#f3f5f7}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.app{max-width:900px;margin:auto;background:#fff;border:1px solid #e1e5e9;border-radius:14px;padding:18px}
+h1{font-size:24px;margin:0 0 4px}
+.muted{color:#687582;font-size:12px}
+input,button{font:inherit}
+input{width:100%;padding:11px 9px;border:1px solid #cfd6dd;border-radius:8px;min-width:0;background:#fff;color:inherit}
+input:focus,button:focus-visible{outline:2px solid #9cc9ff;border-color:#3182ce}
+label{font-size:12px;color:#687582;display:block;margin-bottom:5px}
+button{border:0;border-radius:9px;padding:11px 13px;cursor:pointer;font-weight:600}
+.primary{background:#6d28d9;color:#fff}.secondary{background:#eef2f5;color:#17202a}.danger{background:#fff0f0;color:#b42318}
+.dest{display:flex;gap:8px;margin:6px 0 14px}
+.dest button{flex:1;border:1px solid #cfd6dd;background:#fff;color:#17202a}
+.dest button.on{background:#6d28d9;border-color:#6d28d9;color:#fff}
+.top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.head,.itemrow{display:grid;grid-template-columns:34px 64px minmax(90px,1.4fr) minmax(100px,1fr) minmax(100px,1fr) 36px;gap:7px;align-items:center}
+.head{font-size:11px;color:#687582;padding:8px 0}
+.itemrow{margin-bottom:7px}
+.num{font-weight:bold;text-align:center}
+.lt{background:#f2f4f6;border-radius:8px;padding:11px 6px;text-align:right;font-size:13px;overflow-wrap:anywhere}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.actions button{flex:1}
+hr{border:0;border-top:1px solid #e5e7eb;margin:17px 0}
+.sum{display:flex;justify-content:space-between;align-items:center;margin:9px 0}
+.grand{font-size:25px;font-weight:800;color:#6d28d9}
+#msg{min-height:1.4em;margin-top:10px;font-weight:700;font-size:14px}
+.ok{color:#15803d}.err{color:#b42318}
+details{margin-bottom:6px}summary{cursor:pointer;font-weight:600;font-size:14px}
+.hide{display:none}
+.tw{max-height:340px;overflow:auto;border:1px solid #e1e5e9;border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 7px;text-align:left;border-bottom:1px solid #e8ebef;white-space:nowrap}
+th{position:sticky;top:0;background:#f2f4f6;font-size:11px;color:#687582}
+td.r,th.r{text-align:right}
+@media(max-width:560px){
+ body{padding:8px;padding-top:calc(8px + env(safe-area-inset-top,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}.app{padding:12px;border-radius:10px}h1{font-size:21px}
+ .top{grid-template-columns:1fr}
+ .head{display:none}
+ .itemrow{grid-template-columns:24px 50px 1fr 90px 28px;gap:4px;margin-bottom:12px}
+ .itemrow input{padding:10px 5px;font-size:13px}
+ .itemrow .lt{grid-column:2/5;font-size:12px;padding:6px}
+ .grand{font-size:22px}
+}
+@media(prefers-color-scheme:dark){
+ :root{color:#e8edf3;background:#10151c}
+ .app{background:#19212b;border-color:#2c3744}
+ input{background:#10151c;border-color:#2c3744}
+ .dest button,.secondary{background:#10151c;color:#e8edf3;border-color:#2c3744}
+ .lt,th{background:#10151c}
+ .tw,th,td{border-color:#2c3744}
+ .grand{color:#a78bfa}.ok{color:#4cc38a}.err{color:#ff7b7b}
+ hr{border-color:#2c3744}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>Belanja Yusa</h1>
+<div class="muted">Isi lalu kirim langsung ke Google Sheet, data sheet tampil di bawah</div>
+
+<section id="pb" style="margin-top:14px">
+<label>Tujuan belanja</label>
+<div class="dest"><button type="button" data-d="yusa">Yusa</button><button type="button" data-d="iki">Iki</button></div>
+<div class="top"><div><label for="tglb">Tanggal</label><input id="tglb" type="date"></div></div>
+<div class="head"><div>NO.</div><div>JUMLAH</div><div>NAMA BARANG</div><div>HARGA SATUAN (Rp)</div><div style="text-align:right">TOTAL</div><div></div></div>
+<div id="items"></div>
+<div class="actions"><button class="secondary" id="addBtn" type="button">+ Tambah baris</button><button class="secondary" id="remBtn" type="button">Hapus baris akhir</button></div>
+<hr>
+<div class="sum"><div>Total barang</div><strong id="cnt">0</strong></div>
+<div class="sum"><strong>GRAND TOTAL</strong><div class="grand" id="grand">Rp0</div></div>
+<button class="primary" id="sendb" type="button" style="width:100%;padding:14px">Kirim belanja</button>
+</section>
+
+<hr>
+<div class="sum"><strong id="dtitle">Data di sheet</strong><button class="secondary" id="refresh" type="button">Muat ulang</button></div>
+<div class="tw"><table><thead><tr><th>TGL</th><th>QTY</th><th>NAMA BARANG</th><th>HARGA</th><th>TOTAL</th></tr></thead><tbody id="tbody"><tr><td colspan="5" class="muted">Pilih tujuan untuk melihat data.</td></tr></tbody></table></div>
+<div id="msg" role="status"></div>
+</div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function fmtTgl(v){var p=v.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
+var money=function(n){return "Rp"+Math.round(Number(n)||0).toLocaleString("id-ID")};
+var num=function(v){return Math.max(0,Number(v)||0)};
+function msg(t,c){$("msg").textContent=t;$("msg").className=c||""}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+
+// URL Web App Google Apps Script (yang berakhiran /exec)
+var URL_WEB_APP="https://script.google.com/macros/s/AKfycbyNJp4zpjI6OxftsAPTodm_OhjelLFPkVD2WVQ6YMjbZZcAlV3s9RHq0SwgX3vZuteZ/exec";
+var KUNCI="SRF";
+var items=[{q:"",b:"",h:""}], tujuan="";
+
+$("tglb").value=today();
+
+document.querySelectorAll(".dest button").forEach(function(b){
+  b.onclick=function(){tujuan=b.dataset.d;document.querySelectorAll(".dest button").forEach(function(x){x.classList.toggle("on",x===b)});msg("");muat()}
+});
+
+function render(fi,ff){
+  var h=$("items");h.innerHTML="";
+  items.forEach(function(r,i){
+    var d=document.createElement("div");d.className="itemrow";
+    d.innerHTML='<div class="num">'+(i+1)+'.</div>'
+     +'<input aria-label="Jumlah baris '+(i+1)+'" data-i="'+i+'" data-f="q" type="number" min="0" inputmode="numeric" placeholder="Qty" value="'+esc(r.q)+'">'
+     +'<input aria-label="Nama barang baris '+(i+1)+'" data-i="'+i+'" data-f="b" placeholder="Nama barang" value="'+esc(r.b)+'">'
+     +'<input aria-label="Harga baris '+(i+1)+'" data-i="'+i+'" data-f="h" type="number" min="0" inputmode="numeric" placeholder="Harga" value="'+esc(r.h)+'">'
+     +'<div class="lt" id="lt'+i+'">'+money(num(r.q)*num(r.h))+'</div>'
+     +'<button class="danger" data-x="'+i+'" aria-label="Hapus baris '+(i+1)+'" type="button">×</button>';
+    h.appendChild(d);
+  });
+  h.querySelectorAll("input").forEach(function(inp){
+    inp.addEventListener("input",function(e){items[+e.target.dataset.i][e.target.dataset.f]=e.target.value;calc()});
+    inp.addEventListener("keydown",function(e){
+      if(e.key!=="Enter")return;e.preventDefault();
+      var i=+e.target.dataset.i,f=e.target.dataset.f,order={q:"b",b:"h"};
+      if(order[f]){focus(i,order[f])}
+      else if(i===items.length-1){items.push({q:"",b:"",h:""});render(items.length-1,"q")}
+      else focus(i+1,"q");
+    });
+  });
+  h.querySelectorAll("[data-x]").forEach(function(b){b.onclick=function(){if(items.length>1){items.splice(+b.dataset.x,1);render();}}});
+  if(fi!=null)focus(fi,ff);
+  calc();
+}
+function focus(i,f){var el=$("items").querySelector('input[data-i="'+i+'"][data-f="'+f+'"]');if(el){el.focus();el.select&&el.select()}}
+function calc(){
+  var t=0,c=0;
+  items.forEach(function(r,i){var s=num(r.q)*num(r.h);t+=s;c+=num(r.q);var e=$("lt"+i);if(e)e.textContent=money(s)});
+  $("cnt").textContent=c.toLocaleString("id-ID");$("grand").textContent=money(t);
+}
+$("addBtn").onclick=function(){items.push({q:"",b:"",h:""});render(items.length-1,"q")};
+$("remBtn").onclick=function(){if(items.length>1){items.pop();render()}};
+render();
+
+function urlOk(){
+  if(!URL_WEB_APP||URL_WEB_APP.indexOf("PASTE_")===0){msg("URL Web App belum diisi di kode HTML (cari URL_WEB_APP).","err");return false}
+  return true;
+}
+async function muat(){
+  var tb=$("tbody");
+  if(!tujuan)return;
+  $("dtitle").textContent="Data di sheet: "+(tujuan==="yusa"?"Yusa":"Iki");
+  if(!urlOk())return;
+  tb.innerHTML='<tr><td colspan="5" class="muted">Memuat...</td></tr>';
+  try{
+    var res=await fetch(URL_WEB_APP+"?key="+encodeURIComponent(KUNCI)+"&tujuan="+encodeURIComponent(tujuan));
+    var j=await res.json();
+    if(j.error){tb.innerHTML='<tr><td colspan="5" class="err">'+esc(j.error)+'</td></tr>';return}
+    if(!j.rows.length){tb.innerHTML='<tr><td colspan="5" class="muted">Belum ada data di tab ini.</td></tr>';return}
+    tb.innerHTML=j.rows.slice().reverse().map(function(r){
+      return "<tr><td>"+esc(r[0])+"</td><td>"+esc(r[1])+"</td><td>"+esc(r[2])+"</td><td>"+esc(r[3])+"</td><td>"+esc(r[4])+"</td></tr>";
+    }).join("");
+  }catch(e){tb.innerHTML='<tr><td colspan="5" class="err">Gagal memuat data. Cek koneksi, URL Web App, dan deploy ulang script.</td></tr>'}
+}
+$("refresh").onclick=function(){if(!tujuan)return msg("Pilih tujuan dulu: Yusa atau Iki.","err");muat()};
+
+async function kirim(data,btn,after){
+  if(!urlOk())return;
+  data.key=KUNCI;
+  data.rid=Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+  var body=new URLSearchParams(data);
+  btn.disabled=true;msg("Mengirim...");
+  try{
+    var res=await fetch(URL_WEB_APP,{method:"POST",body:body});
+    var t=(await res.text()).trim();
+    if(/^Success/.test(t)){msg("Berhasil terkirim.","ok");after()}
+    else msg("Ditolak server: "+(t.slice(0,80)||"tanpa respons"),"err");
+  }catch(e){
+    try{await fetch(URL_WEB_APP,{method:"POST",body:body,mode:"no-cors"});msg("Terkirim, tapi respons tidak bisa dibaca. Cek tabel di bawah.","ok");after()}
+    catch(e2){msg("Gagal kirim. Cek koneksi dan URL Web App.","err")}
+  }
+  btn.disabled=false;
+}
+
+$("sendb").onclick=function(){
+  if(!tujuan)return msg("Pilih tujuan dulu: Yusa atau Iki.","err");
+  if(!$("tglb").value)return msg("Pilih tanggal.","err");
+  var cart=items.filter(function(r){return r.b.trim()&&num(r.q)>0}).map(function(r){return{b:r.b.trim(),q:num(r.q),h:num(r.h)}});
+  if(!cart.length)return msg("Isi minimal satu baris dengan jumlah dan nama barang.","err");
+  var tgl=fmtTgl($("tglb").value);
+  var tot=cart.reduce(function(a,r){return a+r.q*r.h},0),pcs=cart.reduce(function(a,r){return a+r.q},0);
+  var sig=tujuan+"|"+tgl+"|"+JSON.stringify(cart),last=null;
+  try{last=JSON.parse(ls("yusa_last")||"null")}catch(e){}
+  if(last&&last.sig===sig&&Date.now()-last.t<120000)return msg("Data yang sama baru saja terkirim. Tunggu 2 menit kalau memang mau kirim ulang.","err");
+  if(!confirm("Kirim ke "+(tujuan==="yusa"?"YUSA":"IKI")+"?\nTanggal: "+tgl+"\n"+cart.length+" barang, "+pcs+" pcs\nGRAND TOTAL: "+money(tot)))return;
+  kirim({type:"belanja",tujuan:tujuan,tgl:tgl,cartData:JSON.stringify(cart)},$("sendb"),function(){
+    ls("yusa_last",JSON.stringify({sig:sig,t:Date.now()}));
+    items=[{q:"",b:"",h:""}];render(0,"q");setTimeout(muat,1500);
+  });
+};
+})();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
+}
+</script>
+</body>
+</html>
